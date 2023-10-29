@@ -20,7 +20,7 @@ app.get('/login', (req, res) => {
     '?response_type=code' +
     '&client_id=' + "32315d9f0a964ac98cd07ec151102cb8" +
     '&scope=' + encodeURIComponent(scopes) +
-    '&redirect_uri=' + encodeURIComponent("http://localhost:1000/callback"));
+    '&redirect_uri=' + encodeURIComponent("http://localhost:10000/callback"));
 });
 
 app.get('/callback', (req, res) => {
@@ -29,7 +29,7 @@ app.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: "http://localhost:1000/callback",
+      redirect_uri: "http://localhost:10000/callback",
       grant_type: 'authorization_code',
     },
     headers: {
@@ -41,7 +41,7 @@ app.get('/callback', (req, res) => {
   request.post(authOptions, (error, response, body) => {
     if (!error && response.statusCode === 200) {
       const access_token = body.access_token;
-      const uri = FRONTEND_URI || 'http://localhost:3000';
+      const uri = FRONTEND_URI || 'http://localhost:10000';
       res.redirect(uri + '?access_token=' + access_token);
     } else {
       res.redirect('/#' +
