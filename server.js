@@ -67,6 +67,6 @@ function createPlaylist() {
   // and name it "Month Name Album Year"
 }
 
-app.listen(PORT, () => {
+app.listen(port, () => {
     console.log(`server started on port ${PORT}`);
   });
