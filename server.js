@@ -41,7 +41,7 @@ app.get('/callback', (req, res) => {
   request.post(authOptions, (error, response, body) => {
     if (!error && response.statusCode === 200) {
       const access_token = body.access_token;
-      const uri = FRONTEND_URI || 'http://localhost:3000';
+      const uri = "https://myjams.onrender.com" || 'http://localhost:3000';
       res.redirect(uri + '?access_token=' + access_token);
     } else {
       res.redirect('/#' +
