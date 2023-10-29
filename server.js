@@ -67,7 +67,3 @@ function createPlaylist() {
   // Implement the logic to create a playlist of your top 12 most listened-to songs
   // and name it "Month Name Album Year"
 }
-
-app.listen(port, () => {
-    console.log(`server started on port ${PORT}`);
-  });
