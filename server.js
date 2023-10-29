@@ -2,6 +2,7 @@ const express = require('express');
 const request = require('request');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const querystring = require('querystring');
 
 const app = express();
 const port = process.env.PORT || 3002;
@@ -28,7 +29,7 @@ app.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: "http://localhost:3000/callback",
       grant_type: 'authorization_code',
     },
     headers: {
