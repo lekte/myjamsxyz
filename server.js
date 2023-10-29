@@ -20,7 +20,7 @@ app.get('/login', (req, res) => {
     '?response_type=code' +
     '&client_id=' + "32315d9f0a964ac98cd07ec151102cb8" +
     '&scope=' + encodeURIComponent(scopes) +
-    '&redirect_uri=' + encodeURIComponent("http://localhost:3000/callback"));
+    '&redirect_uri=' + encodeURIComponent("http://localhost:1000/callback"));
 });
 
 app.get('/callback', (req, res) => {
@@ -29,7 +29,7 @@ app.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: "http://localhost:3000/callback",
+      redirect_uri: "http://localhost:1000/callback",
       grant_type: 'authorization_code',
     },
     headers: {
