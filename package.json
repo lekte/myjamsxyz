@@ -1,9 +1,10 @@
 {
   "name": "package.json",
   "version": "1.0.0",
-  "description": "12 vibes permonth",
-  "main": "index.js",
+  "description": "12 vibes per month",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -16,3 +17,4 @@
     "request": "^2.88.2"
   }
 }
+
