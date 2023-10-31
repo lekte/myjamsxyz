@@ -60,7 +60,7 @@ app.get('/callback', (req, res) => {
         refresh_token,
       };
 
-      const uri = process.env.FRONTEND_URI || 'http://localhost:3000';
+      const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/';
       res.redirect(uri + '?access_token=' + access_token);
     } else {
       res.redirect('/#' +
