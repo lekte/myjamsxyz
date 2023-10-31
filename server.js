@@ -8,27 +8,28 @@ const cron = require('node-cron');
 const app = express();
 const port = process.env.PORT || 3002;
 
-const CLIENT_ID = '32315d9f0a964ac98cd07ec151102cb8';
-const CLIENT_SECRET = '602973493d63487987b4f81a1389a6df';
-const REDIRECT_URI = 'https://myjams.onrender.com/callback';
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
 
 // In-memory storage for demonstration purposes
 const users = {};
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 app.get('/login', (req, res) => {
   const scopes = 'user-read-private user-read-email playlist-modify-public user-top-read';
   res.redirect('https://accounts.spotify.com/authorize' +
     '?response_type=code' +
-    '&client_id=' + CLIENT_ID +
+    '&client_id=' + "32315d9f0a964ac98cd07ec151102cb8" +
     '&scope=' + encodeURIComponent(scopes) +
-    '&redirect_uri=' + encodeURIComponent(REDIRECT_URI));
+    '&redirect_uri=' + encodeURIComponent("https://myjams.onrender.com/callback"));
 });
 
 app.get('/callback', (req, res) => {
@@ -37,11 +38,11 @@ app.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: "https://myjams.onrender.com/callback",
       grant_type: 'authorization_code',
     },
     headers: {
-      'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
+      'Authorization': 'Basic ' + (new Buffer.from("32315d9f0a964ac98cd07ec151102cb8" + ':' + "602973493d63487987b4f81a1389a6df").toString('base64')),
     },
     json: true,
   };
@@ -58,7 +59,7 @@ app.get('/callback', (req, res) => {
         refresh_token,
       };
 
-      const uri = 'https://myjams.onrender.com';
+      const uri = process.env.FRONTEND_URI || 'http://localhost:3000';
       res.redirect(uri + '?access_token=' + access_token);
     } else {
       res.redirect('/#' +
@@ -93,33 +94,7 @@ function createPlaylist() {
       };
   
       request.get(options, (error, response, body) => {
-        if (response.statusCode === 401 && body.error.message === 'The access token expired') {
-          // Access token has expired, refresh it
-          const authOptions = {
-            url: 'https://accounts.spotify.com/api/token',
-            form: {
-              grant_type: 'refresh_token',
-              refresh_token: refresh_token,
-              client_id: CLIENT_ID,
-              client_secret: CLIENT_SECRET,
-            },
-            json: true,
-          };
-  
-          request.post(authOptions, (error, response, body) => {
-            if (!error && response.statusCode === 200) {
-              const newAccessToken = body.access_token;
-  
-              // Update the stored access token
-              users[user_id].access_token = newAccessToken;
-  
-              // Retry creating the playlist with the new access token
-              createPlaylist();
-            } else {
-              console.error('Failed to refresh access token:', error || body.error);
-            }
-          });
-        } else if (!error && response.statusCode === 200) {
+        if (!error && response.statusCode === 200) {
           const topTracks = body.items.slice(0, 12);
           const playlistOptions = {
             url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
