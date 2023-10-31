@@ -6,7 +6,7 @@ const querystring = require('querystring');
 const cron = require('node-cron');
 
 const app = express();
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 10000;
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -17,7 +17,7 @@ const users = {};
 
 app.use(cors());
 app.use(bodyParser.json());
-// app.use(express.static('public'));
+app.use(express.static('public'));
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
