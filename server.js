@@ -72,7 +72,7 @@ app.get('/callback', (req, res) => {
           };
 
           // Create a playlist immediately with the user's top 12 songs from the last 30 days
-          createPlaylist(user_id);
+          createPlaylist(user_id, 'short_term');
 
           const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
           res.redirect(uri);
@@ -100,16 +100,16 @@ app.listen(port, () => {
 cron.schedule('0 0 1 * *', () => {
   // This code will run on the 1st day of every month at 00:00
   for (const user_id in users) {
-    createPlaylist(user_id);
+    createPlaylist(user_id, 'medium_term');
   }
 });
 
-function createPlaylist(userId) {
+function createPlaylist(userId, timeRange) {
   const { access_token, refresh_token } = users[userId];
 
   // Use the Spotify Web API to get the user's top tracks
   const options = {
-    url: 'https://api.spotify.com/v1/me/top/tracks',
+    url: `https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}`,
     headers: {
       'Authorization': 'Bearer ' + access_token,
     },
@@ -119,14 +119,20 @@ function createPlaylist(userId) {
   request.get(options, (error, response, body) => {
     if (!error && response.statusCode === 200) {
       const topTracks = body.items.slice(0, 12);
+      const date = new Date();
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const monthName = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+      const playlistName = `My ${monthName} Top 12, ${year}`;
+
       const playlistOptions = {
-        url: 'https://api.spotify.com/v1/users/' + userId + '/playlists',
+        url: `https://api.spotify.com/v1/users/${userId}/playlists`,
         headers: {
           'Authorization': 'Bearer ' + access_token,
         },
         json: true,
         body: {
-          name: 'Month Name Album Year',
+          name: playlistName,
           public: true,
         },
       };
@@ -136,7 +142,7 @@ function createPlaylist(userId) {
           const playlistId = body.id;
           const trackUris = topTracks.map(track => track.uri);
           const addTracksOptions = {
-            url: 'https://api.spotify.com/v1/playlists/' + playlistId + '/tracks',
+            url: `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
             headers: {
               'Authorization': 'Bearer ' + access_token,
             },
