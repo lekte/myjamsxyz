@@ -27,9 +27,9 @@ app.get('/login', (req, res) => {
   const scopes = 'user-read-private user-read-email playlist-modify-public user-top-read';
   res.redirect('https://accounts.spotify.com/authorize' +
     '?response_type=code' +
-    '&client_id=' + CLIENT_ID +
+    '&client_id=' + "32315d9f0a964ac98cd07ec151102cb8" +
     '&scope=' + encodeURIComponent(scopes) +
-    '&redirect_uri=' + encodeURIComponent(REDIRECT_URI));
+    '&redirect_uri=' + encodeURIComponent("https://myjams.onrender.com/callback"));
 });
 
 app.get('/callback', (req, res) => {
@@ -38,11 +38,11 @@ app.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: "https://myjams.onrender.com/callback",
       grant_type: 'authorization_code',
     },
     headers: {
-      'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
+      'Authorization': 'Basic ' + (new Buffer.from("32315d9f0a964ac98cd07ec151102cb8" + ':' + "602973493d63487987b4f81a1389a6df").toString('base64')),
     },
     json: true,
   };
