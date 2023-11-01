@@ -52,6 +52,8 @@ app.get('/callback', (req, res) => {
       const access_token = body.access_token;
       const refresh_token = body.refresh_token;
 
+      console.log('Access Token:', access_token);  // Log the access token
+
       // Get user's profile to extract user_id
       const userProfileOptions = {
         url: 'https://api.spotify.com/v1/me',
