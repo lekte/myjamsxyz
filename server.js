@@ -110,8 +110,9 @@ app.get('/callback', (req, res) => {
       // Create a playlist immediately with the user's top 12 songs from the last 30 days
       createPlaylist(user_id, 'short_term');
 
-      const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
-      res.redirect(uri);
+    const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
+    res.redirect(uri + '?access_token=' + access_token);
+
     });
   });
 });
