@@ -51,19 +51,39 @@ app.get('/callback', (req, res) => {
     if (!error && response.statusCode === 200) {
       const access_token = body.access_token;
       const refresh_token = body.refresh_token;
-      const user_id = body.user_id;
 
-      // Store access token and refresh token in user storage
-      users[user_id] = {
-        access_token,
-        refresh_token,
+      // Get user's profile to extract user_id
+      const userProfileOptions = {
+        url: 'https://api.spotify.com/v1/me',
+        headers: {
+          'Authorization': 'Bearer ' + access_token,
+        },
+        json: true,
       };
 
-      // Create a playlist immediately with the user's top 12 songs from the last 30 days
-      createPlaylist(user_id);
+      request.get(userProfileOptions, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          const user_id = body.id;
 
-      const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
-      res.redirect(uri);
+          // Store access token and refresh token in user storage
+          users[user_id] = {
+            access_token,
+            refresh_token,
+          };
+
+          // Create a playlist immediately with the user's top 12 songs from the last 30 days
+          createPlaylist(user_id);
+
+          const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
+          res.redirect(uri);
+        } else {
+          console.error('Failed to get user profile:', error || body.error);
+          res.redirect('/#' +
+            querystring.stringify({
+              error: 'invalid_token',
+            }));
+        }
+      });
     } else {
       res.redirect('/#' +
         querystring.stringify({
