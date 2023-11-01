@@ -20,8 +20,15 @@ function login() {
 }
 
 function getAccessToken() {
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(window.location.hash.substring(1)); // Use hash instead of search
   const accessToken = urlParams.get('access_token');
+  const error = urlParams.get('error'); // Get error from URL
+
+  if (error) {
+    console.error('Error:', error);
+    return;
+  }
+
   if (accessToken) {
     console.log('Access Token:', accessToken);
     localStorage.setItem('access_token', accessToken);
@@ -47,12 +54,7 @@ function getUserInfo() {
       'Authorization': 'Bearer ' + accessToken,
     },
   })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
+  .then(response => response.json())
   .then(data => {
     console.log('User Info:', data);
     const userInfoDiv = document.getElementById('user-info');
@@ -70,6 +72,7 @@ function getUserInfo() {
 
 window.onload = getAccessToken;
 </script>
+
 
 </body>
 </html>
