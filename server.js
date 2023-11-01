@@ -52,8 +52,6 @@ app.get('/callback', (req, res) => {
       const access_token = body.access_token;
       const refresh_token = body.refresh_token;
 
-      console.log('Access Token:', access_token);  // Log the access token
-
       // Get user's profile to extract user_id
       const userProfileOptions = {
         url: 'https://api.spotify.com/v1/me',
@@ -66,6 +64,16 @@ app.get('/callback', (req, res) => {
       request.get(userProfileOptions, (error, response, body) => {
         if (!error && response.statusCode === 200) {
           const user_id = body.id;
+
+          // Check if the access token has the necessary scopes
+          if (!body.scope.includes('user-read-private') || !body.scope.includes('user-read-email')) {
+            console.error('Access token does not have the necessary scopes');
+            res.redirect('/#' +
+              querystring.stringify({
+                error: 'insufficient_scopes',
+              }));
+            return;
+          }
 
           // Store access token and refresh token in user storage
           users[user_id] = {
