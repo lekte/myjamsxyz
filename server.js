@@ -27,9 +27,9 @@ app.get('/login', (req, res) => {
   const scopes = 'user-read-private user-read-email playlist-modify-public user-top-read';
   res.redirect('https://accounts.spotify.com/authorize' +
     '?response_type=code' +
-    '&client_id=' + "32315d9f0a964ac98cd07ec151102cb8" +
+    '&client_id=' + CLIENT_ID +
     '&scope=' + encodeURIComponent(scopes) +
-    '&redirect_uri=' + encodeURIComponent("https://myjams.onrender.com/callback"));
+    '&redirect_uri=' + encodeURIComponent(REDIRECT_URI));
 });
 
 app.get('/callback', (req, res) => {
@@ -38,11 +38,11 @@ app.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: "https://myjams.onrender.com/callback",
+      redirect_uri: REDIRECT_URI,
       grant_type: 'authorization_code',
     },
     headers: {
-      'Authorization': 'Basic ' + (new Buffer.from("32315d9f0a964ac98cd07ec151102cb8" + ':' + "602973493d63487987b4f81a1389a6df").toString('base64')),
+      'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
     },
     json: true,
   };
@@ -97,8 +97,8 @@ app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
 
-cron.schedule('0 0 1 * *', () => {
-  // This code will run on the 1st day of every month at 00:00
+cron.schedule('0 0 25 * *', () => {
+  // This code will run on the 25th day of every month at 00:00
   for (const user_id in users) {
     createPlaylist(user_id, 'medium_term');
   }
