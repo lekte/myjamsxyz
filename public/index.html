@@ -24,13 +24,23 @@ function getAccessToken() {
   if (accessToken) {
     console.log('Access Token:', accessToken);
     localStorage.setItem('access_token', accessToken);
-    getUserInfo(accessToken);
+    getUserInfo();
   } else {
     console.log('No access token in URL');
+    const storedAccessToken = localStorage.getItem('access_token');
+    if (storedAccessToken) {
+      getUserInfo();
+    }
   }
 }
 
-function getUserInfo(accessToken) {
+function getUserInfo() {
+  const accessToken = localStorage.getItem('access_token');
+  if (!accessToken) {
+    console.log('No access token in local storage');
+    return;
+  }
+  
   fetch('https://api.spotify.com/v1/me', {
     headers: {
       'Authorization': 'Bearer ' + accessToken,
