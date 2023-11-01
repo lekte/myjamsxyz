@@ -14,15 +14,14 @@
 </div>
 
 <script>
-
 function login() {
   window.location.href = '/login';
 }
 
 function getAccessToken() {
-  const urlParams = new URLSearchParams(window.location.hash.substring(1)); // Use hash instead of search
+  const urlParams = new URLSearchParams(window.location.search);
   const accessToken = urlParams.get('access_token');
-  const error = urlParams.get('error'); // Get error from URL
+  const error = urlParams.get('error');
 
   if (error) {
     console.error('Error:', error);
@@ -72,7 +71,5 @@ function getUserInfo() {
 
 window.onload = getAccessToken;
 </script>
-
-
 </body>
 </html>
