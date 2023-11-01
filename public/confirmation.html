@@ -12,5 +12,22 @@
   <p>Your Spotify account has been successfully connected. By the end of every month, a new playlist with your top 12 songs from the past month will be created automatically. Enjoy your music!</p>
   <button onclick="window.location.href='/'">Go Back</button>
 </div>
+<!-- confirmation.html -->
+<script>
+    function getAccessToken() {
+      const params = new URLSearchParams(window.location.search);
+      const accessToken = params.get('access_token');
+      
+      if (accessToken) {
+        console.log('Access Token:', accessToken);
+        localStorage.setItem('access_token', accessToken);
+      } else {
+        console.log('No access token in URL');
+      }
+    }
+    
+    window.onload = getAccessToken;
+    </script>
+    
 </body>
 </html>
