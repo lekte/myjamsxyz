@@ -8,9 +8,9 @@ const cron = require('node-cron');
 const app = express();
 const port = process.env.PORT || 10000;
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
+const CLIENT_ID = process.env.CLIENT_ID || "32315d9f0a964ac98cd07ec151102cb8";
+const CLIENT_SECRET = process.env.CLIENT_SECRET || "602973493d63487987b4f81a1389a6df";
+const REDIRECT_URI = process.env.REDIRECT_URI || "https://myjams.onrender.com/callback";
 
 // In-memory storage for demonstration purposes
 const users = {};
@@ -27,9 +27,9 @@ app.get('/login', (req, res) => {
   const scopes = 'user-read-private user-read-email playlist-modify-public user-top-read';
   res.redirect('https://accounts.spotify.com/authorize' +
     '?response_type=code' +
-    '&client_id=' + "32315d9f0a964ac98cd07ec151102cb8" +
+    '&client_id=' + CLIENT_ID +
     '&scope=' + encodeURIComponent(scopes) +
-    '&redirect_uri=' + encodeURIComponent("https://myjams.onrender.com/callback"));
+    '&redirect_uri=' + encodeURIComponent(REDIRECT_URI));
 });
 
 app.get('/callback', (req, res) => {
@@ -46,11 +46,11 @@ app.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: "https://myjams.onrender.com/callback",
+      redirect_uri: REDIRECT_URI,
       grant_type: 'authorization_code',
     },
     headers: {
-      'Authorization': 'Basic ' + (new Buffer.from("32315d9f0a964ac98cd07ec151102cb8" + ':' + "602973493d63487987b4f81a1389a6df").toString('base64')),
+      'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
     },
     json: true,
   };
@@ -67,6 +67,8 @@ app.get('/callback', (req, res) => {
 
     const access_token = body.access_token;
     const refresh_token = body.refresh_token;
+
+    console.log('Access Token:', access_token);  // Log the access token to the console
 
     // Get user's profile to extract user_id
     const userProfileOptions = {
@@ -109,10 +111,7 @@ app.get('/callback', (req, res) => {
       createPlaylist(user_id, 'short_term');
 
       const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
-      res.redirect(uri + '?' +
-        querystring.stringify({
-          access_token: access_token,
-        }));
+      res.redirect(uri);
     });
   });
 });
