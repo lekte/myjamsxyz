@@ -23,7 +23,6 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-
 app.get('/login', (req, res) => {
   const scopes = 'user-read-private user-read-email playlist-modify-public user-top-read';
   res.redirect('https://accounts.spotify.com/authorize' +
@@ -60,8 +59,11 @@ app.get('/callback', (req, res) => {
         refresh_token,
       };
 
-      const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/';
-      res.redirect(uri + '?access_token=' + access_token);
+      // Create a playlist immediately with the user's top 12 songs from the last 30 days
+      createPlaylist(user_id);
+
+      const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
+      res.redirect(uri);
     } else {
       res.redirect('/#' +
         querystring.stringify({
@@ -77,68 +79,66 @@ app.listen(port, () => {
 
 cron.schedule('0 0 1 * *', () => {
   // This code will run on the 1st day of every month at 00:00
-  createPlaylist();
+  for (const user_id in users) {
+    createPlaylist(user_id);
+  }
 });
 
-function createPlaylist() {
-    // Iterate over all users and create a playlist for each user
-    for (const user_id in users) {
-      const { access_token, refresh_token } = users[user_id];
-  
-      // Use the Spotify Web API to get the user's top tracks
-      const options = {
-        url: 'https://api.spotify.com/v1/me/top/tracks',
+function createPlaylist(userId) {
+  const { access_token, refresh_token } = users[userId];
+
+  // Use the Spotify Web API to get the user's top tracks
+  const options = {
+    url: 'https://api.spotify.com/v1/me/top/tracks',
+    headers: {
+      'Authorization': 'Bearer ' + access_token,
+    },
+    json: true,
+  };
+
+  request.get(options, (error, response, body) => {
+    if (!error && response.statusCode === 200) {
+      const topTracks = body.items.slice(0, 12);
+      const playlistOptions = {
+        url: 'https://api.spotify.com/v1/users/' + userId + '/playlists',
         headers: {
           'Authorization': 'Bearer ' + access_token,
         },
         json: true,
+        body: {
+          name: 'Month Name Album Year',
+          public: true,
+        },
       };
-  
-      request.get(options, (error, response, body) => {
-        if (!error && response.statusCode === 200) {
-          const topTracks = body.items.slice(0, 12);
-          const playlistOptions = {
-            url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
+
+      request.post(playlistOptions, (error, response, body) => {
+        if (!error && response.statusCode === 201) {
+          const playlistId = body.id;
+          const trackUris = topTracks.map(track => track.uri);
+          const addTracksOptions = {
+            url: 'https://api.spotify.com/v1/playlists/' + playlistId + '/tracks',
             headers: {
               'Authorization': 'Bearer ' + access_token,
             },
             json: true,
             body: {
-              name: 'Month Name Album Year',
-              public: true,
+              uris: trackUris,
             },
           };
-  
-          request.post(playlistOptions, (error, response, body) => {
+
+          request.post(addTracksOptions, (error, response, body) => {
             if (!error && response.statusCode === 201) {
-              const playlistId = body.id;
-              const trackUris = topTracks.map(track => track.uri);
-              const addTracksOptions = {
-                url: 'https://api.spotify.com/v1/playlists/' + playlistId + '/tracks',
-                headers: {
-                  'Authorization': 'Bearer ' + access_token,
-                },
-                json: true,
-                body: {
-                  uris: trackUris,
-                },
-              };
-  
-              request.post(addTracksOptions, (error, response, body) => {
-                if (!error && response.statusCode === 201) {
-                  console.log('Playlist created successfully!');
-                } else {
-                  console.error('Failed to add tracks to playlist:', error || body.error);
-                }
-              });
+              console.log('Playlist created successfully!');
             } else {
-              console.error('Failed to create playlist:', error || body.error);
+              console.error('Failed to add tracks to playlist:', error || body.error);
             }
           });
         } else {
-          console.error('Failed to get top tracks:', error || body.error);
+          console.error('Failed to create playlist:', error || body.error);
         }
       });
+    } else {
+      console.error('Failed to get top tracks:', error || body.error);
     }
-  }
-  
+  });
+}
