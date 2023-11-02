@@ -15,21 +15,22 @@
 <!-- confirmation.html -->
 <script>
     function getAccessToken() {
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
+      console.log('Hash:', window.location.hash);  // Add this line to log the hash value
+      const params = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = params.get('access_token');
       
       if (accessToken) {
         console.log('Access Token:', accessToken);
         localStorage.setItem('access_token', accessToken);
-        window.location.href = '/'; // Redirect to index.html
+        window.location.href = '/';
       } else {
         console.log('No access token in URL');
       }
     }
     
     window.onload = getAccessToken;
-    </script>
+</script>
+
     
 </body>
 </html>
