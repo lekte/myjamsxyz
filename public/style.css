@@ -20,7 +20,7 @@ body {
   
   p {
     text-align: center;
-    margin: 10px 0;
+    margin: 5px 0;
   }
   
   .container {
@@ -39,6 +39,7 @@ body {
     background-color: #1db954;
     color: #ffffff;
     cursor: pointer;
+    margin-top: 20px;
   }
   
   button:hover {
