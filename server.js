@@ -100,15 +100,6 @@ app.get('/login', (req, res) => {
   
         const user_id = body.id;
   
-        if (body.scope && (!body.scope.includes('user-read-private') || !body.scope.includes('user-read-email'))) {
-          console.error('Access token does not have the necessary scopes');
-          res.redirect('/#' +
-            querystring.stringify({
-              error: 'insufficient_scopes',
-            }));
-          return;
-        }
-  
         users[user_id] = {
           access_token,
           refresh_token,
@@ -117,7 +108,7 @@ app.get('/login', (req, res) => {
         createPlaylist(user_id, 'short_term');
   
         const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
-        res.redirect(uri + '#access_token=' + access_token);  // Change from query parameter to fragment
+        res.redirect(uri + '#access_token=' + access_token);
       });
     });
   });
