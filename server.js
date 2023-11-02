@@ -33,44 +33,42 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/callback', (req, res) => {
-    const code = req.query.code || null;
-    if (!code) {
+  const code = req.query.code || null;
+  if (!code) {
+    res.redirect('/#' +
+      querystring.stringify({
+        error: 'invalid_code',
+      }));
+    return;
+  }
+
+  const authOptions = {
+    url: 'https://accounts.spotify.com/api/token',
+    form: {
+      code: code,
+      redirect_uri: REDIRECT_URI,
+      grant_type: 'authorization_code',
+    },
+    headers: {
+      'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
+    },
+    json: true,
+  };
+
+  request.post(authOptions, (error, response, body) => {
+    if (error || response.statusCode !== 200) {
+      console.error('Failed to get access token:', error || body.error);
       res.redirect('/#' +
         querystring.stringify({
-          error: 'invalid_code',
+          error: 'invalid_token',
         }));
       return;
     }
-  
-    const authOptions = {
-      url: 'https://accounts.spotify.com/api/token',
-      form: {
-        code: code,
-        redirect_uri: REDIRECT_URI,
-        grant_type: 'authorization_code',
-      },
-      headers: {
-        'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
-      },
-      json: true,
-    };
-  
-    request.post(authOptions, (error, response, body) => {
-      console.log('Spotify API Response:', body);  // Log the entire response body
-  
-      if (error || response.statusCode !== 200) {
-        console.error('Failed to get access token:', error || body.error);
-        res.redirect('/#' +
-          querystring.stringify({
-            error: 'invalid_token',
-          }));
-        return;
-      }
-  
-      const access_token = body.access_token;
-      const refresh_token = body.refresh_token;
-  
-      console.log('Access Token:', access_token);  // Log the access token to the console  
+
+    const access_token = body.access_token;
+    const refresh_token = body.refresh_token;
+
+    console.log('Access Token:', access_token);  // Log the access token to the console
 
     // Get user's profile to extract user_id
     const userProfileOptions = {
@@ -112,9 +110,8 @@ app.get('/callback', (req, res) => {
       // Create a playlist immediately with the user's top 12 songs from the last 30 days
       createPlaylist(user_id, 'short_term');
 
-    const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
-    res.redirect(uri + '?access_token=' + access_token);
-
+      const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
+      res.redirect(uri + '?access_token=' + access_token);
     });
   });
 });
@@ -135,7 +132,7 @@ function createPlaylist(userId, timeRange) {
 
   // Use the Spotify Web API to get the user's top tracks
   const options = {
-    url: `https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}`,
+    url: `https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}&limit=12`,
     headers: {
       'Authorization': 'Bearer ' + access_token,
     },
@@ -148,7 +145,7 @@ function createPlaylist(userId, timeRange) {
       return;
     }
 
-    const topTracks = body.items.slice(0, 12);
+    const topTracks = body.items;
     const date = new Date();
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const monthName = monthNames[date.getMonth()];
