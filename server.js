@@ -33,42 +33,44 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/callback', (req, res) => {
-  const code = req.query.code || null;
-  if (!code) {
-    res.redirect('/#' +
-      querystring.stringify({
-        error: 'invalid_code',
-      }));
-    return;
-  }
-
-  const authOptions = {
-    url: 'https://accounts.spotify.com/api/token',
-    form: {
-      code: code,
-      redirect_uri: REDIRECT_URI,
-      grant_type: 'authorization_code',
-    },
-    headers: {
-      'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
-    },
-    json: true,
-  };
-
-  request.post(authOptions, (error, response, body) => {
-    if (error || response.statusCode !== 200) {
-      console.error('Failed to get access token:', error || body.error);
+    const code = req.query.code || null;
+    if (!code) {
       res.redirect('/#' +
         querystring.stringify({
-          error: 'invalid_token',
+          error: 'invalid_code',
         }));
       return;
     }
-
-    const access_token = body.access_token;
-    const refresh_token = body.refresh_token;
-
-    console.log('Access Token:', access_token);  // Log the access token to the console
+  
+    const authOptions = {
+      url: 'https://accounts.spotify.com/api/token',
+      form: {
+        code: code,
+        redirect_uri: REDIRECT_URI,
+        grant_type: 'authorization_code',
+      },
+      headers: {
+        'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
+      },
+      json: true,
+    };
+  
+    request.post(authOptions, (error, response, body) => {
+      console.log('Spotify API Response:', body);  // Log the entire response body
+  
+      if (error || response.statusCode !== 200) {
+        console.error('Failed to get access token:', error || body.error);
+        res.redirect('/#' +
+          querystring.stringify({
+            error: 'invalid_token',
+          }));
+        return;
+      }
+  
+      const access_token = body.access_token;
+      const refresh_token = body.refresh_token;
+  
+      console.log('Access Token:', access_token);  // Log the access token to the console  
 
     // Get user's profile to extract user_id
     const userProfileOptions = {
