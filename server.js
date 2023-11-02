@@ -24,108 +24,67 @@ app.get('/', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const scopes = 'user-read-private user-read-email playlist-modify-public user-top-read';
-  res.redirect('https://accounts.spotify.com/authorize' +
-    '?response_type=code' +
-    '&client_id=' + CLIENT_ID +
-    '&scope=' + encodeURIComponent(scopes) +
-    '&redirect_uri=' + encodeURIComponent(REDIRECT_URI));
-});
+    const scopes = 'user-read-private user-read-email playlist-modify-public user-top-read';
+    res.redirect('https://accounts.spotify.com/authorize' +
+      '?response_type=code' +  // Change from token to code
+      '&client_id=' + CLIENT_ID +
+      '&scope=' + encodeURIComponent(scopes) +
+      '&redirect_uri=' + encodeURIComponent(REDIRECT_URI));
+  });
+
 
 app.get('/callback', (req, res) => {
-    const code = req.query.code || null;
-    if (!code) {
+  const access_token = req.query.access_token || null;
+  if (!access_token) {
+    res.redirect('/#' +
+      querystring.stringify({
+        error: 'invalid_token',
+      }));
+    return;
+  }
+
+  // Get user's profile to extract user_id
+  const userProfileOptions = {
+    url: 'https://api.spotify.com/v1/me',
+    headers: {
+      'Authorization': 'Bearer ' + access_token,
+    },
+    json: true,
+  };
+
+  request.get(userProfileOptions, (error, response, body) => {
+    if (error) {
+      console.error('Failed to get user profile:', error);
       res.redirect('/#' +
         querystring.stringify({
-          error: 'invalid_code',
+          error: 'invalid_token',
         }));
       return;
     }
-  
-    const authOptions = {
-      url: 'https://accounts.spotify.com/api/token',
-      form: {
-        code: code,
-        redirect_uri: REDIRECT_URI,
-        grant_type: 'authorization_code',
-      },
-      headers: {
-        'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
-      },
-      json: true,
+
+    if (response.statusCode !== 200) {
+      console.error('Failed to get user profile:', body.error);
+      res.redirect('/#' +
+        querystring.stringify({
+          error: 'invalid_token',
+        }));
+      return;
+    }
+
+    const user_id = body.id;
+
+    // Store access token in user storage
+    users[user_id] = {
+      access_token,
     };
-  
-    request.post(authOptions, (error, response, body) => {
-      if (error || response.statusCode !== 200) {
-        console.error('Failed to get access token:', error || body.error);
-        res.redirect('/#' +
-          querystring.stringify({
-            error: 'invalid_token',
-          }));
-        return;
-      }
-  
-      const access_token = body.access_token;
-      const refresh_token = body.refresh_token;
-  
-      console.log('Access Token:', access_token);  // Log the access token to the console
-  
-      // Get user's profile to extract user_id
-      
-      const userProfileOptions = {
-          url: 'https://api.spotify.com/v1/me',
-          headers: {
-            'Authorization': 'Bearer ' + body.access_token, // Use the access token from the body
-          },
-          json: true,
-        };
-    
-        request.get(userProfileOptions, (error, response, body) => {
-          if (error) {
-            console.error('Failed to get user profile:', error);
-            res.redirect('/#' +
-              querystring.stringify({
-                error: 'invalid_token',
-              }));
-            return;
-          }
-    
-          if (response.statusCode !== 200) {
-            console.error('Failed to get user profile:', body.error);
-            res.redirect('/#' +
-              querystring.stringify({
-                error: 'invalid_token',
-              }));
-            return;
-          }
-  
-        const user_id = body.id;
-  
-        // Check if the access token has the necessary scopes
-        if (body.scope && (!body.scope.includes('user-read-private') || !body.scope.includes('user-read-email'))) {
-          console.error('Access token does not have the necessary scopes');
-          res.redirect('/#' +
-            querystring.stringify({
-              error: 'insufficient_scopes',
-            }));
-          return;
-        }
-  
-        // Store access token and refresh token in user storage
-        users[user_id] = {
-          access_token,
-          refresh_token,
-        };
-  
-        // Create a playlist immediately with the user's top 12 songs from the last 30 days
-        createPlaylist(user_id, 'short_term');
 
-        const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
-        res.redirect(uri + '/#' + querystring.stringify({ access_token }));
+    // Create a playlist immediately with the user's top 12 songs from the last 30 days
+    createPlaylist(user_id, 'short_term');
 
-      });
-    });
+    const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
+    res.redirect(uri + '?access_token=' + access_token);
   });
+});
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
@@ -139,7 +98,7 @@ cron.schedule('0 0 25 * *', () => {
 });
 
 function createPlaylist(userId, timeRange) {
-  const { access_token, refresh_token } = users[userId];
+  const { access_token } = users[userId];
 
   // Use the Spotify Web API to get the user's top tracks
   const options = {
