@@ -126,11 +126,11 @@ cron.schedule('0 0 25 * *', () => {
 });
 
 function createPlaylist(userId, timeRange) {
-    const { access_token } = users[userId];
+    const { access_token, refresh_token } = users[userId];
   
     // Use the Spotify Web API to get the user's top tracks
     const options = {
-      url: `https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}&limit=12`,
+      url: `https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}&limit=17`, // Updated limit
       headers: {
         'Authorization': 'Bearer ' + access_token,
       },
@@ -148,7 +148,7 @@ function createPlaylist(userId, timeRange) {
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       const monthName = monthNames[date.getMonth()];
       const year = date.getFullYear();
-      const playlistName = `My ${monthName} Top 12, ${year}`;
+      const playlistName = `My ${monthName} Top 17, ${year}`; // Updated playlist name
   
       const playlistOptions = {
         url: `https://api.spotify.com/v1/users/${userId}/playlists`,
@@ -161,6 +161,7 @@ function createPlaylist(userId, timeRange) {
           public: true,
         },
       };
+  
   
     request.post(playlistOptions, (error, response, body) => {
       if (error || response.statusCode !== 201) {
