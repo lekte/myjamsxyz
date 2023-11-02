@@ -71,23 +71,33 @@ app.get('/callback', (req, res) => {
     console.log('Access Token:', access_token);  // Log the access token to the console
 
     // Get user's profile to extract user_id
+    
     const userProfileOptions = {
-      url: 'https://api.spotify.com/v1/me',
-      headers: {
-        'Authorization': 'Bearer ' + access_token,
-      },
-      json: true,
-    };
-
-    request.get(userProfileOptions, (error, response, body) => {
-      if (error || response.statusCode !== 200) {
-        console.error('Failed to get user profile:', error || body.error);
-        res.redirect('/#' +
-          querystring.stringify({
-            error: 'invalid_token',
-          }));
-        return;
-      }
+        url: 'https://api.spotify.com/v1/me',
+        headers: {
+          'Authorization': 'Bearer ' + body.access_token, // Use the access token from the body
+        },
+        json: true,
+      };
+  
+      request.get(userProfileOptions, (error, response, body) => {
+        if (error) {
+          console.error('Failed to get user profile:', error);
+          res.redirect('/#' +
+            querystring.stringify({
+              error: 'invalid_token',
+            }));
+          return;
+        }
+  
+        if (response.statusCode !== 200) {
+          console.error('Failed to get user profile:', body.error);
+          res.redirect('/#' +
+            querystring.stringify({
+              error: 'invalid_token',
+            }));
+          return;
+        }
 
       const user_id = body.id;
 
