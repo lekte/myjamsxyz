@@ -108,7 +108,7 @@ app.get('/login', (req, res) => {
         createPlaylist(user_id, 'short_term');
   
         const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
-        res.redirect(uri + '#access_token=' + access_token);
+        res.redirect(uri + '?access_token=' + access_token);
       });
     });
   });
