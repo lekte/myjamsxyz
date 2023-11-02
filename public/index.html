@@ -25,20 +25,19 @@ function getAccessToken() {
   if (accessToken) {
     console.log('Access Token:', accessToken);
     localStorage.setItem('access_token', accessToken);
-    getUserInfo();
+    getUserInfo(accessToken); // Pass the access token to getUserInfo
   } else {
     console.log('No access token in URL');
     const storedAccessToken = localStorage.getItem('access_token');
     if (storedAccessToken) {
-      getUserInfo();
+      getUserInfo(storedAccessToken); // Pass the stored access token to getUserInfo
     }
   }
 }
 
-function getUserInfo() {
-  const accessToken = localStorage.getItem('access_token');
+function getUserInfo(accessToken) { // Accept the access token as a parameter
   if (!accessToken) {
-    console.log('No access token in local storage');
+    console.log('No access token');
     return;
   }
   
