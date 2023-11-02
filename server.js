@@ -33,58 +33,95 @@ app.get('/login', (req, res) => {
   });
 
 
-app.get('/callback', (req, res) => {
-  const access_token = req.query.access_token || null;
-  if (!access_token) {
-    res.redirect('/#' +
-      querystring.stringify({
-        error: 'invalid_token',
-      }));
-    return;
-  }
-
-  // Get user's profile to extract user_id
-  const userProfileOptions = {
-    url: 'https://api.spotify.com/v1/me',
-    headers: {
-      'Authorization': 'Bearer ' + access_token,
-    },
-    json: true,
-  };
-
-  request.get(userProfileOptions, (error, response, body) => {
-    if (error) {
-      console.error('Failed to get user profile:', error);
+  app.get('/callback', (req, res) => {
+    const code = req.query.code || null;
+    if (!code) {
       res.redirect('/#' +
         querystring.stringify({
-          error: 'invalid_token',
+          error: 'invalid_code',
         }));
       return;
     }
-
-    if (response.statusCode !== 200) {
-      console.error('Failed to get user profile:', body.error);
-      res.redirect('/#' +
-        querystring.stringify({
-          error: 'invalid_token',
-        }));
-      return;
-    }
-
-    const user_id = body.id;
-
-    // Store access token in user storage
-    users[user_id] = {
-      access_token,
+  
+    const authOptions = {
+      url: 'https://accounts.spotify.com/api/token',
+      form: {
+        code: code,
+        redirect_uri: REDIRECT_URI,
+        grant_type: 'authorization_code',
+      },
+      headers: {
+        'Authorization': 'Basic ' + (new Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
+      },
+      json: true,
     };
-
-    // Create a playlist immediately with the user's top 12 songs from the last 30 days
-    createPlaylist(user_id, 'short_term');
-
-    const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
-    res.redirect(uri + '?access_token=' + access_token);
+  
+    request.post(authOptions, (error, response, body) => {
+      if (error || response.statusCode !== 200) {
+        console.error('Failed to get access token:', error || body.error);
+        res.redirect('/#' +
+          querystring.stringify({
+            error: 'invalid_token',
+          }));
+        return;
+      }
+  
+      const access_token = body.access_token;
+      const refresh_token = body.refresh_token;
+  
+      console.log('Access Token:', access_token);
+  
+      const userProfileOptions = {
+        url: 'https://api.spotify.com/v1/me',
+        headers: {
+          'Authorization': 'Bearer ' + access_token,
+        },
+        json: true,
+      };
+  
+      request.get(userProfileOptions, (error, response, body) => {
+        if (error) {
+          console.error('Failed to get user profile:', error);
+          res.redirect('/#' +
+            querystring.stringify({
+              error: 'invalid_token',
+            }));
+          return;
+        }
+  
+        if (response.statusCode !== 200) {
+          console.error('Failed to get user profile:', body.error);
+          res.redirect('/#' +
+            querystring.stringify({
+              error: 'invalid_token',
+            }));
+          return;
+        }
+  
+        const user_id = body.id;
+  
+        if (body.scope && (!body.scope.includes('user-read-private') || !body.scope.includes('user-read-email'))) {
+          console.error('Access token does not have the necessary scopes');
+          res.redirect('/#' +
+            querystring.stringify({
+              error: 'insufficient_scopes',
+            }));
+          return;
+        }
+  
+        users[user_id] = {
+          access_token,
+          refresh_token,
+        };
+  
+        createPlaylist(user_id, 'short_term');
+  
+        const uri = process.env.FRONTEND_URI || 'https://myjams.onrender.com/confirmation.html';
+        res.redirect(uri + '#access_token=' + access_token);  // Change from query parameter to fragment
+      });
+    });
   });
-});
+  
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

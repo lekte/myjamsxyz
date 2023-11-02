@@ -14,21 +14,22 @@
 </div>
 
 <script>
-function getAccessToken() {
-  const params = new URLSearchParams(window.location.search);
-  const accessToken = params.get('access_token');
+    function getAccessToken() {
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = params.get('access_token');
+      
+      if (accessToken) {
+        console.log('Access Token:', accessToken);
+        localStorage.setItem('access_token', accessToken);
+        window.location.href = '/';  // Redirect to index.html
+      } else {
+        console.log('No access token in URL');
+      }
+    }
+    
+    window.onload = getAccessToken;
+  </script>
   
-  if (accessToken) {
-    console.log('Access Token:', accessToken);
-    localStorage.setItem('access_token', accessToken);
-    window.location.href = '/';
-  } else {
-    console.log('No access token in URL');
-  }
-}
-
-window.onload = getAccessToken;
-</script>
 
 </body>
 </html>
